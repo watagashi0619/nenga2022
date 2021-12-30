@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.0.0/dist/mindar-image.prod.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.0.0/dist/mindar-image-aframe.prod.js"></script>
+</head>
+
+<body>
+    <a-scene
+        mindar-image="imageTargetSrc: https://watagashi0619-cors-anywhere.herokuapp.com/https://raw.githack.com/watagashi0619/nenga2022/main/marker/targets.mind;"
+        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        <a-assets>
+            <video id="ar-video" class="stop" autoplay loop="false"
+                src="https://watagashi0619-cors-anywhere.herokuapp.com/https://raw.githack.com/watagashi0619/nenga2022/main/movie/sample.mp4"></video>
+        </a-assets>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-video src="#ar-video" width="1" height="0.5625" position="0 0 0" rotation="0 0 0" play="true"></a-video>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        var v = document.querySelector("#ar-video");
+        window.addEventListener("click", function () {
+            if (v.classList.contains("stop")) {
+                v.className = "play";
+                v.play();
+            } else {
+                v.className = "stop";
+                v.pause();
+            }
+        });
+        v.addEventListener("ended", function () {
+            v.className = "stop";
+        }, false);
+    </script>
+</body>
+
+</html>
