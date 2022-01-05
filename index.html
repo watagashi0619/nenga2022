@@ -5,7 +5,10 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-E898J75MZT"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
         gtag('js', new Date());
         gtag('config', 'G-E898J75MZT');
     </script>
@@ -13,36 +16,197 @@
     <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.0.0/dist/mindar-image.prod.js"></script>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.0.0/dist/mindar-image-aframe.prod.js"></script>
+
+    <style>
+        #scanning-overlay {
+            z-index: 2;
+        }
+
+        .overlay {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            background: transparent;
+        }
+
+        #youtube-video iframe {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+        }
+
+        @media (min-aspect-ratio: 1/1) {
+            #scanning-overlay .inner {
+                width: 50vh;
+                height: 50vh;
+            }
+        }
+
+        @media (max-aspect-ratio: 1/1) {
+            #scanning-overlay .inner {
+                width: 80vw;
+                height: 80vw;
+            }
+        }
+
+        @media (min-aspect-ratio: 16/9) {
+            #youtube-video iframe {
+                width: calc(16 / 9 * 100vh);
+                height: 100vh;
+            }
+        }
+
+        @media (max-aspect-ratio: 16/9) {
+            #youtube-video iframe {
+                width: 100vw;
+                height: 56.25vw;
+            }
+        }
+
+        #scanning-overlay .inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+
+            background:
+                linear-gradient(to right, white 10px, transparent 10px) 0 0,
+                linear-gradient(to right, white 10px, transparent 10px) 0 100%,
+                linear-gradient(to left, white 10px, transparent 10px) 100% 0,
+                linear-gradient(to left, white 10px, transparent 10px) 100% 100%,
+                linear-gradient(to bottom, white 10px, transparent 10px) 0 0,
+                linear-gradient(to bottom, white 10px, transparent 10px) 100% 0,
+                linear-gradient(to top, white 10px, transparent 10px) 0 100%,
+                linear-gradient(to top, white 10px, transparent 10px) 100% 100%;
+            background-repeat: no-repeat;
+            background-size: 40px 40px;
+        }
+
+        #scanning-overlay.hidden,
+        #watch-on-wrapper.hidden,
+        #youtube-video.hidden {
+            display: none;
+        }
+
+        #scanning-overlay img {
+            opacity: 0.6;
+            width: 90%;
+            align-self: center;
+        }
+
+        #watch-on {
+            position: fixed;
+            right: 3.2em;
+            bottom: -3px;
+            display: flex;
+            text-decoration: none;
+            align-items: right;
+            margin: 0 auto;
+            padding: 0.5em 1em;
+            width: 10em;
+            color: white;
+            font-weight: 100;
+            border: 2px solid white;
+            border-radius: 10px 10px 0px 0px;
+        }
+
+        .watch-on-back-youtube {
+            background: rgba(255, 0, 0, 0.3);
+        }
+
+        .watch-on-back-ar {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #youtube-video {
+            z-index: 3;
+        }
+
+        #watch-on {
+            z-index: 99;
+        }
+    </style>
 </head>
 
 <body>
-    <a-scene
-        mindar-image="imageTargetSrc: https://watagashi0619-cors-anywhere.herokuapp.com/https://raw.githack.com/watagashi0619/nenga2022/main/marker/targets.mind;"
+    <div id="scanning-overlay" class="overlay hidden">
+        <div class="inner">
+            <img src="img/inside.png" />
+        </div>
+    </div>
+    <div id="watch-on-wrapper" class="overlay hidden">
+        <a id="watch-on" class="watch-on-back-youtube" href="#">Watch
+            on&nbsp;<b id="text-watch-on">
+                YouTube</b></a>
+    </div>
+    <div id="youtube-video" class="overlay hidden">
+        <iframe src="https://www.youtube.com/embed/pZn4iaPNbAE" title="YouTube video player" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+    </div>
+    <a-scene mindar-image="uiScanning: #scanning-overlay; imageTargetSrc: marker/targets.mind;"
         vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-assets>
-            <video id="ar-video" class="stop" autoplay loop="false"
-                src="https://watagashi0619-cors-anywhere.herokuapp.com/https://raw.githack.com/watagashi0619/nenga2022/main/movie/movie.mp4"></video>
+            <video id="ar-video" class="stop" autoplay loop="false" muted="true" src="movie/movie.mp4"></video>
         </a-assets>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        <a-entity mindar-image-target="targetIndex: 0">
+        <a-entity id="target" mindar-image-target="targetIndex: 0">
             <a-video src="#ar-video" width="1" height="0.5625" position="0 0 0" rotation="0 0 0" play="true"></a-video>
         </a-entity>
     </a-scene>
 
     <script>
-        var v = document.querySelector("#ar-video");
-        window.addEventListener("click", function () {
-            if (v.classList.contains("stop")) {
-                v.className = "play";
-                v.play();
+        var arvideo = document.querySelector("#ar-video");
+        var canvas = document.querySelector(".a-canvas");
+        var entity = document.querySelector("#target");
+        var overlay = document.querySelector("#scanning-overlay");
+        var watchon = document.querySelector("#watch-on");
+        var youtubelink = document.querySelector("#watch-on-wrapper");
+        var youtubevideo = document.querySelector("#youtube-video");
+        var textwatchon = document.querySelector("#text-watch-on");
+        canvas.addEventListener("click", () => {
+            if (arvideo.classList.contains("stop")) {
+                arvideo.className = "play";
+                arvideo.play();
             } else {
-                v.className = "stop";
-                v.pause();
+                arvideo.className = "stop";
+                arvideo.pause();
             }
         });
-        v.addEventListener("ended", function () {
-            v.className = "stop";
+        arvideo.addEventListener("ended", () => {
+            arvideo.className = "stop";
+            overlay.classList.remove("hidden");
         }, false);
+        youtubelink.addEventListener("click", () => {
+            arvideo.className = "stop";
+            arvideo.pause();
+            if (youtubevideo.classList.contains("hidden")) {
+                youtubevideo.classList.remove("hidden");
+                overlay.classList.add("hidden");
+                watchon.className = "watch-on-back-ar";
+                textwatchon.innerText = "AR";
+            } else {
+                youtubevideo.classList.add("hidden");
+                overlay.classList.remove("hidden");
+                watchon.className = "watch-on-back-youtube";
+                textwatchon.innerText = "YouTube";
+            }
+        });
+        entity.addEventListener("targetFound", () => {
+            overlay.classList.add("hidden");
+            youtubelink.classList.remove("hidden");
+        });
+        entity.addEventListener("targetLost", () => {
+            arvideo.className = "stop";
+            arvideo.pause();
+            overlay.classList.remove("hidden");
+        });
     </script>
 </body>
 
